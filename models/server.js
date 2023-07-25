@@ -1,37 +1,44 @@
 require("dotenv").config();
-var cors = require('cors')
+var cors = require("cors");
 const express = require("express");
-
+const { dbConnection } = require("../db/config.db");
 
 class Server {
-    constructor(){
-        this.app = express();
-        this.port = process.env.PORT;
-        this.usersPath = "/api/users";
+  constructor() {
+    this.app = express();
+    this.port = process.env.PORT;
+    this.usersPath = "/api/users";
 
-        this.middlewares();
+    //Conectar a base de datos
+    this.conectarDB();
 
-        this.router();
-    }
+    this.middlewares();
 
-    middlewares(){
-        this.app.use(cors());
+    this.router();
+  }
 
-        //lectura y parseo body
-        this.app.use(express.json());
-        
-        this.app.use(express.static("public"));
-    }
+  async conectarDB() {
+    await dbConnection();
+  }
 
-    router(){
-        this.app.use(this.usersPath, require("../routes/user.routes"));
-    }
+  middlewares() {
+    this.app.use(cors());
 
-    listen(){
-        this.app.listen(this.port, () => {
-            console.log(`Example app listening at http://localhost:${this.port}`);
-          });
-        }
+    //lectura y parseo body
+    this.app.use(express.json());
+
+    this.app.use(express.static("public"));
+  }
+
+  router() {
+    this.app.use(this.usersPath, require("../routes/user.routes"));
+  }
+
+  listen() {
+    this.app.listen(this.port, () => {
+      console.log(`Example app listening at http://localhost:${this.port}`);
+    });
+  }
 }
 
 module.exports = Server;

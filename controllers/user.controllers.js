@@ -1,40 +1,69 @@
+const bcryptjs = require("bcryptjs");
 const { response, request } = require("express");
+const User = require("../models/user.models");
 
-const getUsers = (req = request, res = response) => {
-  const { q, name = "no name", apikey, page = 1, limit } = req.query;
+const getUsers = async (req = request, res = response) => {
+  const { skip = 0, limit = 5 } = req.query;
+  const query = { state: true };
+
+  const [total, users] = await Promise.all([
+    User.countDocuments(query),
+    User.find(query).skip(Number(skip)).limit(Number(limit)),
+  ]);
 
   res.json({
     msg: "get API",
-    q,
+    total,
+    users,
+  });
+};
+
+const putUsers = async (req, res = response) => {
+  const { id } = req.params;
+  const { _id, password, google, email, ...rest } = req.body;
+
+  if (password) {
+    // Encrypt password
+    const salt = bcryptjs.genSaltSync();
+    rest.password = bcryptjs.hashSync(password, salt);
+  }
+
+  const user = await User.findByIdAndUpdate(id, rest);
+
+  res.json(user);
+};
+
+const postUsers = async (req, res = response) => {
+  const { name, email, password, role } = req.body;
+
+  const user = new User({
     name,
-    apikey,
-    page,
-    limit,
+    email,
+    password,
+    role,
   });
-};
 
-const putUsers = (req, res = response) => {
-  const id = req.params;
+  // Encrypt password
+  const salt = bcryptjs.genSaltSync();
+  user.password = bcryptjs.hashSync(password, salt);
 
-  res.json({
-    msg: "put API",
-    id,
-  });
-};
-
-const postUsers = (req, res = response) => {
-  const { name, age } = req.body;
+  await user.save();
 
   res.json({
     msg: "post API",
-    name,
-    age,
+    user,
   });
 };
 
-const deleteUsers = (req, res = response) => {
+const deleteUsers = async (req, res = response) => {
+  const { id } = req.params;
+
+  // const user = await User.findByIdAndDelete(id); // esto  borra definitivamente de la base de datos
+  const user = await User.findByIdAndUpdate(id, { state: false });
+
   res.json({
     msg: "delete API",
+    user,
   });
 };
 
