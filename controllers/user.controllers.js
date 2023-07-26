@@ -63,7 +63,7 @@ const deleteUsers = async (req, res = response) => {
 
   res.json({
     msg: "delete API",
-    user,
+    user
   });
 };
 
